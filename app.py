@@ -42,7 +42,13 @@ def validate_total_percentage(form, field):
 
 class EquityForm(FlaskForm):
     # Initial Setup
-    total_shares = FloatField('Total Shares', default=DEFAULT_VALUES['total_shares'])
+    total_shares = FloatField('Total Shares', 
+                            default=float(DEFAULT_VALUES['total_shares']),
+                            validators=[NumberRange(min=1)],
+                            render_kw={
+                                "placeholder": "Enter total shares",
+                                "type": "text"
+                            })
     
     # Founder Equity
     founder1_percentage = FloatField('Founder 1 (%)', default=DEFAULT_VALUES['founder1_percentage'], validators=[NumberRange(min=0, max=100), validate_total_percentage])
@@ -140,27 +146,41 @@ def index():
     form = EquityForm()
     result = None
     
-    if form.validate_on_submit():
+    if request.method == 'POST':
         try:
+            # Get raw form data
+            total_shares = request.form.get('total_shares', '').strip()
+            if total_shares:
+                # Remove commas and convert to float
+                total_shares = float(total_shares.replace(',', ''))
+                if total_shares < 1:
+                    flash('Total shares must be at least 1', 'error')
+                    return render_template('index.html', form=form, result=result)
+            else:
+                total_shares = DEFAULT_VALUES['total_shares']
+
+            # Create form data dictionary
             form_data = {
-                'total_shares': form.total_shares.data,
-                'founder1_percentage': form.founder1_percentage.data,
-                'founder2_percentage': form.founder2_percentage.data,
-                'founder3_percentage': form.founder3_percentage.data,
-                'founder4_percentage': form.founder4_percentage.data,
-                'founder5_percentage': form.founder5_percentage.data,
-                'options_pool': form.options_pool.data,
-                'seed_amount': form.seed_amount.data,
-                'seed_valuation': form.seed_valuation.data,
-                'series_a_amount': form.series_a_amount.data,
-                'series_a_valuation': form.series_a_valuation.data,
-                'exit_amount': form.exit_amount.data,
+                'total_shares': total_shares,
+                'founder1_percentage': float(form.founder1_percentage.data),
+                'founder2_percentage': float(form.founder2_percentage.data),
+                'founder3_percentage': float(form.founder3_percentage.data),
+                'founder4_percentage': float(form.founder4_percentage.data),
+                'founder5_percentage': float(form.founder5_percentage.data),
+                'options_pool': float(form.options_pool.data),
+                'seed_amount': float(str(form.seed_amount.data).replace(',', '')),
+                'seed_valuation': float(str(form.seed_valuation.data).replace(',', '')),
+                'series_a_amount': float(str(form.series_a_amount.data).replace(',', '')),
+                'series_a_valuation': float(str(form.series_a_valuation.data).replace(',', '')),
+                'exit_amount': float(str(form.exit_amount.data).replace(',', '')),
                 'tax_type': form.tax_type.data
             }
             
             result = calculate_equity(form_data)
             if result is None:
                 flash('Error in calculation. Please check your inputs.', 'error')
+        except (ValueError, TypeError) as e:
+            flash(f'Error: Invalid input values. Please ensure all numeric fields contain valid numbers.', 'error')
         except Exception as e:
             flash(f'Error: {str(e)}', 'error')
     elif form.errors:
@@ -171,4 +191,4 @@ def index():
     return render_template('index.html', form=form, result=result)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=4000) 
+    app.run(host='0.0.0.0', port=4000) 
