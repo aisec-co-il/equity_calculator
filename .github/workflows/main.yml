@@ -70,7 +70,6 @@ jobs:
       - name: Populate release File with Secrets
         run: |
           cat <<EOF >> ./release
-          FOO=bar
           EOF
       - name: Copy release file
         uses: srueda99/scp-action@v12
