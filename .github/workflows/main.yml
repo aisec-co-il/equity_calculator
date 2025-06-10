@@ -1,1 +1,103 @@
- 
+name: CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION_NAME }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Extract branch name
+      id: extract-branch
+      run: |
+        BRANCH_NAME=$(echo $GITHUB_REF | cut -d'/' -f 3)
+        echo "Branch name: $BRANCH_NAME"
+        echo "::set-output name=branch_name::$BRANCH_NAME"
+    - name: Build and push Docker image
+      id: docker-build
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ vars.REGISTRY_URL }}/equity:${{ steps.extract-branch.outputs.branch_name }}
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create directories
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ vars.HOST }}
+          username: ${{ vars.HOST_USERNAME }}
+          key: ${{ secrets.HOST_SSH_KEY }}
+          script: |
+            mkdir -p /opt/docker-compose/equity
+      - name: Copy docker-compose.yml
+        uses: srueda99/scp-action@v12
+        with:
+            port: 22
+            host: ${{ vars.HOST }}
+            origin: "./docker-compose.yml"
+            destination: "/opt/docker-compose/equity"
+            username: ${{ vars.HOST_USERNAME }}
+            key: ${{ secrets.HOST_SSH_KEY }}
+
+      - name: Populate release File with Secrets
+        run: |
+          cat <<EOF >> ./release
+          FOO=bar
+          EOF
+      - name: Copy release file
+        uses: srueda99/scp-action@v12
+        with:
+            port: 22
+            host: ${{ vars.HOST }}
+            origin: "./release"
+            destination: "/opt/docker-compose/equity"
+            username: ${{ vars.HOST_USERNAME }}
+            key: ${{ secrets.HOST_SSH_KEY }}
+
+      - name: Start docker-compose 
+        uses: appleboy/ssh-action@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION_NAME: ${{ vars.AWS_REGION_NAME }}
+          HOST_USERNAME: ${{ vars.HOST_USERNAME }}
+        with:
+          host: ${{ vars.HOST }}
+          username: ${{ vars.HOST_USERNAME }}
+          key: ${{ secrets.HOST_SSH_KEY }}
+          envs: AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_REGION_NAME,HOST_USERNAME
+          script: |
+            aws ecr get-login-password --region $AWS_REGION_NAME | docker login --username AWS --password-stdin 381491867564.dkr.ecr.us-east-1.amazonaws.com
+            cd /opt/docker-compose/equity
+            source ./release
+            docker-compose --env-file release pull
+            docker-compose --env-file release up -d
+            docker system prune -a --volumes --filter "label=com.docker.compose.service=equity" -f 
