@@ -3,7 +3,7 @@ services:
   equity:
     container_name: equity
     image: ${DOCKER_IMAGE:-}
-    build: ${DOCKER_BUILD_CONTEXT:-}
+    build: ${DOCKER_BUILD_CONTEXT:-.}
     ports:
       - "4000:4000"
     environment:
