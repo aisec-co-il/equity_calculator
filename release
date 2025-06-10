@@ -1,0 +1,3 @@
+NETWORK_NAME=web
+NETWORK_EXTERNAL=true
+DOCKER_IMAGE=381491867564.dkr.ecr.us-east-1.amazonaws.com/tema/equity:main
