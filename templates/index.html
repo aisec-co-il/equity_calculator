@@ -53,7 +53,7 @@
                             <h3 class="mb-3">Initial Setup</h3>
                             <div class="mb-3">
                                 {{ form.total_shares.label(class="form-label") }}
-                                {{ form.total_shares(class="form-control", onchange="formatNumber(this)", onkeyup="formatNumber(this)") }}
+                                {{ form.total_shares(class="form-control") }}
                             </div>
 
                             <h3 class="mb-3 mt-4">Founder Equity</h3>
@@ -137,11 +137,12 @@
                                 <div class="card-body">
                                     <div class="mb-3">
                                         {{ form.seed_amount.label(class="form-label") }}
-                                        {{ form.seed_amount(class="form-control", onchange="formatCurrency(this)") }}
+                                        {{ form.seed_amount(class="form-control") }}
+                                        <small class="form-text text-muted">Valuation cap: $30M (5x investment)</small>
                                     </div>
                                     <div class="mb-3">
                                         {{ form.seed_valuation.label(class="form-label") }}
-                                        {{ form.seed_valuation(class="form-control", onchange="formatCurrency(this)") }}
+                                        {{ form.seed_valuation(class="form-control") }}
                                     </div>
                                 </div>
                             </div>
@@ -151,11 +152,12 @@
                                 <div class="card-body">
                                     <div class="mb-3">
                                         {{ form.series_a_amount.label(class="form-label") }}
-                                        {{ form.series_a_amount(class="form-control", onchange="formatCurrency(this)") }}
+                                        {{ form.series_a_amount(class="form-control") }}
+                                        <small class="form-text text-muted">Valuation cap: $200M (4x investment)</small>
                                     </div>
                                     <div class="mb-3">
                                         {{ form.series_a_valuation.label(class="form-label") }}
-                                        {{ form.series_a_valuation(class="form-control", onchange="formatCurrency(this)") }}
+                                        {{ form.series_a_valuation(class="form-control") }}
                                     </div>
                                 </div>
                             </div>
@@ -165,11 +167,12 @@
                                 <div class="card-body">
                                     <div class="mb-3">
                                         {{ form.exit_amount.label(class="form-label") }}
-                                        {{ form.exit_amount(class="form-control", onchange="formatCurrency(this)") }}
+                                        {{ form.exit_amount(class="form-control") }}
                                     </div>
                                     <div class="mb-3">
                                         {{ form.tax_type.label(class="form-label") }}
                                         {{ form.tax_type(class="form-select") }}
+                                        <small class="form-text text-muted">Individual tax rate: 33%, Company tax rate: 23%</small>
                                     </div>
                                 </div>
                             </div>
@@ -212,32 +215,63 @@
                             </table>
                         </div>
 
+                        <h4>Investment Rounds</h4>
+                        <div class="table-responsive mb-4">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Round</th>
+                                        <th>Investment</th>
+                                        <th>Valuation</th>
+                                        <th>New Shares</th>
+                                        <th>Total Shares</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Seed</td>
+                                        <td>${{ "{:,.2f}".format(result.seed_amount) }}</td>
+                                        <td>${{ "{:,.2f}".format(result.seed_valuation) }}</td>
+                                        <td>{{ "{:,}".format(result.seed_shares|int) }}</td>
+                                        <td>{{ "{:,}".format(result.total_shares_after_seed|int) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Series A</td>
+                                        <td>${{ "{:,.2f}".format(result.series_a_amount) }}</td>
+                                        <td>${{ "{:,.2f}".format(result.series_a_valuation) }}</td>
+                                        <td>{{ "{:,}".format(result.series_a_shares|int) }}</td>
+                                        <td>{{ "{:,}".format(result.total_shares_after_rounds|int) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
                         <h4>Final Ownership After Dilution</h4>
                         <div class="table-responsive mb-4">
                             <table class="table">
                                 <thead>
                                     <tr>
                                         <th>Stakeholder</th>
-                                        <th>Ownership %</th>
+                                        <th>Percentage</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for stakeholder, percentage in result.final_ownership.items() %}
+                                    {% for stakeholder, percentage in result.final_percentages.items() %}
                                     <tr>
                                         <td>{{ stakeholder }}</td>
-                                        <td>{{ "%.2f"|format(percentage) }}%</td>
+                                        <td>{{ "{:.2f}%".format(percentage) }}</td>
                                     </tr>
                                     {% endfor %}
+                                    <tr class="table-info">
+                                        <td><strong>Total</strong></td>
+                                        <td><strong>100.00%</strong></td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div class="alert alert-info">
-                            Total shares after all rounds: {{ "{:,}".format(result.total_shares_after_rounds|int) }}
-                        </div>
-
-                        <h4 class="mt-4">Distribution of Exit Amount (${{ "{:,.2f}".format(result.exit_amount) }})</h4>
-                        <div class="table-responsive">
+                        <h4>Distribution of Exit Amount</h4>
+                        <div class="table-responsive mb-4">
                             <table class="table">
                                 <thead>
                                     <tr>
@@ -248,14 +282,20 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for stakeholder, proceeds in result.exit_proceeds.items() %}
+                                    {% for stakeholder, amount in result.exit_amounts.items() %}
                                     <tr>
                                         <td>{{ stakeholder }}</td>
-                                        <td>${{ "{:,.2f}".format(proceeds.gross_amount) }}</td>
-                                        <td>${{ "{:,.2f}".format(proceeds.tax_amount) }}</td>
-                                        <td>${{ "{:,.2f}".format(proceeds.net_amount) }}</td>
+                                        <td>${{ "{:,.2f}".format(amount) }}</td>
+                                        <td>${{ "{:,.2f}".format(result.tax_amounts[stakeholder]) }}</td>
+                                        <td>${{ "{:,.2f}".format(result.net_amounts[stakeholder]) }}</td>
                                     </tr>
                                     {% endfor %}
+                                    <tr class="table-info">
+                                        <td><strong>Total</strong></td>
+                                        <td>${{ "{:,.2f}".format(result.exit_amount) }}</td>
+                                        <td>${{ "{:,.2f}".format(result.exit_amount * result.tax_rate / 100) }}</td>
+                                        <td>${{ "{:,.2f}".format(result.exit_amount * (1 - result.tax_rate / 100)) }}</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
