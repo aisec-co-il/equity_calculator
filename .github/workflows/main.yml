@@ -41,7 +41,7 @@ jobs:
         tags: |
           ${{ vars.REGISTRY_URL }}/equity:${{ steps.extract-branch.outputs.branch_name }}
   deploy:
-
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
