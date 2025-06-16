@@ -186,122 +186,12 @@
             </div>
 
             <div class="col-md-6">
-                {% if result %}
                 <div class="card">
                     <div class="card-body">
                         <h3 class="mb-4">Results</h3>
-                        
-                        <h4>Initial Share Distribution</h4>
-                        <div class="table-responsive mb-4">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Founder</th>
-                                        <th>Shares</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for founder, shares in result.initial_shares.items() %}
-                                    <tr>
-                                        <td>{{ founder }}</td>
-                                        <td>{{ "{:,}".format(shares|int) }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                    <tr>
-                                        <td>Options Pool</td>
-                                        <td>{{ "{:,}".format(result.options_pool_shares|int) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <h4>Investment Rounds</h4>
-                        <div class="table-responsive mb-4">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Round</th>
-                                        <th>Investment</th>
-                                        <th>Valuation</th>
-                                        <th>New Shares</th>
-                                        <th>Total Shares</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Seed</td>
-                                        <td>${{ "{:,.2f}".format(result.seed_amount) }}</td>
-                                        <td>${{ "{:,.2f}".format(result.seed_valuation) }}</td>
-                                        <td>{{ "{:,}".format(result.seed_shares|int) }}</td>
-                                        <td>{{ "{:,}".format(result.total_shares_after_seed|int) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Series A</td>
-                                        <td>${{ "{:,.2f}".format(result.series_a_amount) }}</td>
-                                        <td>${{ "{:,.2f}".format(result.series_a_valuation) }}</td>
-                                        <td>{{ "{:,}".format(result.series_a_shares|int) }}</td>
-                                        <td>{{ "{:,}".format(result.total_shares_after_rounds|int) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <h4>Final Ownership After Dilution</h4>
-                        <div class="table-responsive mb-4">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Stakeholder</th>
-                                        <th>Percentage</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for stakeholder, percentage in result.final_percentages.items() %}
-                                    <tr>
-                                        <td>{{ stakeholder }}</td>
-                                        <td>{{ "{:.2f}%".format(percentage) }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                    <tr class="table-info">
-                                        <td><strong>Total</strong></td>
-                                        <td><strong>100.00%</strong></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <h4>Distribution of Exit Amount</h4>
-                        <div class="table-responsive mb-4">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Stakeholder</th>
-                                        <th>Gross Amount</th>
-                                        <th>Tax Amount</th>
-                                        <th>Net Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for stakeholder, amount in result.exit_amounts.items() %}
-                                    <tr>
-                                        <td>{{ stakeholder }}</td>
-                                        <td>${{ "{:,.2f}".format(amount) }}</td>
-                                        <td>${{ "{:,.2f}".format(result.tax_amounts[stakeholder]) }}</td>
-                                        <td>${{ "{:,.2f}".format(result.net_amounts[stakeholder]) }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                    <tr class="table-info">
-                                        <td><strong>Total</strong></td>
-                                        <td>${{ "{:,.2f}".format(result.exit_amount) }}</td>
-                                        <td>${{ "{:,.2f}".format(result.exit_amount * result.tax_rate / 100) }}</td>
-                                        <td>${{ "{:,.2f}".format(result.exit_amount * (1 - result.tax_rate / 100)) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div id="dynamic-results"></div>
                     </div>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
