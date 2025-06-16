@@ -227,5 +227,29 @@ def index():
     
     return render_template('index.html', form=form, result=result)
 
+@app.route('/calculate', methods=['POST'])
+def calculate_api():
+    try:
+        data = request.json
+        form_data = {
+            'total_shares': float(str(data.get('total_shares', DEFAULT_VALUES['total_shares'])).replace(',', '')),
+            'founder1_percentage': float(data.get('founder1_percentage', DEFAULT_VALUES['founder1_percentage'])),
+            'founder2_percentage': float(data.get('founder2_percentage', DEFAULT_VALUES['founder2_percentage'])),
+            'founder3_percentage': float(data.get('founder3_percentage', DEFAULT_VALUES['founder3_percentage'])),
+            'founder4_percentage': float(data.get('founder4_percentage', DEFAULT_VALUES['founder4_percentage'])),
+            'founder5_percentage': float(data.get('founder5_percentage', DEFAULT_VALUES['founder5_percentage'])),
+            'options_pool': float(data.get('options_pool', DEFAULT_VALUES['options_pool'])),
+            'seed_amount': float(str(data.get('seed_amount', DEFAULT_VALUES['seed_amount'])).replace(',', '')),
+            'seed_valuation': float(str(data.get('seed_valuation', DEFAULT_VALUES['seed_valuation'])).replace(',', '')),
+            'series_a_amount': float(str(data.get('series_a_amount', DEFAULT_VALUES['series_a_amount'])).replace(',', '')),
+            'series_a_valuation': float(str(data.get('series_a_valuation', DEFAULT_VALUES['series_a_valuation'])).replace(',', '')),
+            'exit_amount': float(str(data.get('exit_amount', DEFAULT_VALUES['exit_amount'])).replace(',', '')),
+            'tax_type': data.get('tax_type', DEFAULT_VALUES.get('tax_type', 'individual'))
+        }
+        result = calculate_equity(form_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000) 
